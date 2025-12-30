@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AnimeHub - Просмотр аниме</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <header class="header">
@@ -71,11 +72,12 @@
                 </div>
             </div>
             <div class="video-container">
-                <iframe id="playerFrame" frameborder="0" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>
+<iframe id="playerFrame" frameborder="0" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>
             </div>
             <p id="playerDescription" class="video-description"></p>
             <button class="btn btn-secondary" onclick="closePlayer()">Закрыть плеер</button>
         </div>
+
         <div id="animeGrid" class="anime-grid"></div>
 
         <div id="emptyState" class="empty-state hidden">

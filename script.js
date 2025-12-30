@@ -1,12 +1,34 @@
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4eHFtYWJjcmZmb3FlZ2R0ZnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNDQ3NzcsImV4cCI6MjA3NjkyMDc3N30.0L8en_UyCCyDsqrQ6Ympt5ZsPDv3DujmYmaCbsZ5b0Y';
+
 const ADMIN_PASSWORD = 'admin123';
 let isAdmin = false;
 let animeList = [];
 let currentQuality = localStorage.getItem('videoQuality') || '720';
+let supabase = null;
+
+function initSupabase() {
+    if (typeof supabase === 'undefined' || !window.supabase) {
+        console.error('Supabase клиент не загружен! Проверьте подключение CDN.');
+        alert('Ошибка: Supabase не загружен. Проверьте интернет-соединение.');
+        return false;
+    }
+    
+    try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase инициализирован успешно');
+        return true;
+    } catch (error) {
+        console.error('Ошибка инициализации Supabase:', error);
+        alert('Ошибка подключения к базе данных');
+        return false;
+    }
+}
 
 window.onload = function() {
-    loadAnimeList();
-    renderAnimeGrid();
-    initQualitySelector();
+    if (initSupabase()) {
+        loadAnimeList();
+        initQualitySelector();
+    }
 };
 
 function initQualitySelector() {
@@ -20,7 +42,7 @@ function changeQuality() {
     const qualitySelect = document.getElementById('qualitySelect');
     currentQuality = qualitySelect.value;
     localStorage.setItem('videoQuality', currentQuality);
-
+    
     const playerFrame = document.getElementById('playerFrame');
     if (playerFrame.src) {
         const currentSrc = playerFrame.src;
@@ -74,7 +96,7 @@ function extractVkVideoId(url) {
     return null;
 }
 
-function addAnime() {
+async function addAnime() {
     const title = document.getElementById('animeTitle').value.trim();
     const description = document.getElementById('animeDescription').value.trim();
     const vkUrl = document.getElementById('animeVkUrl').value.trim();
@@ -84,37 +106,69 @@ function addAnime() {
         alert('Заполните название и VK ссылку');
         return;
     }
-
-    const videoData = extractVkVideoId(vkUrl);
+const videoData = extractVkVideoId(vkUrl);
     if (!videoData) {
         alert('Неверный формат VK ссылки. Пример: https://vk.com/video-12345_67890');
         return;
     }
 
     const anime = {
-        id: Date.now(),
         title: title,
         description: description,
-        vkUrl: vkUrl,
+        vk_url: vkUrl,
         thumbnail: thumbnail,
-        videoData: videoData
+        video_oid: videoData.oid,
+        video_id: videoData.id,
+        created_at: new Date().toISOString()
     };
 
-    animeList.push(anime);
-    saveAnimeList();
-    renderAnimeGrid();
-    clearForm();
-    toggleAddForm();
+    try {
+        const { data, error } = await supabase
+            .from('anime')
+            .insert([anime])
+            .select();
+
+        if (error) {
+            console.error('Ошибка добавления:', error);
+            alert('Ошибка при добавлении аниме: ' + error.message);
+            return;
+        }
+
+        console.log('Аниме добавлено:', data);
+        await loadAnimeList();
+        clearForm();
+        toggleAddForm();
+        alert('Аниме успешно добавлено!');
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при добавлении');
+    }
 }
 
-function deleteAnime(id) {
-    if (confirm('Удалить это аниме?')) {
-        animeList = animeList.filter(function(a) {
-            return a.id !== id;
-        });
-        saveAnimeList();
-        renderAnimeGrid();
+async function deleteAnime(id) {
+    if (!confirm('Удалить это аниме?')) {
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('anime')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Ошибка удаления:', error);
+            alert('Ошибка при удалении: ' + error.message);
+            return;
+        }
+
+        console.log('Аниме удалено');
+        await loadAnimeList();
         closePlayer();
+        alert('Аниме успешно удалено!');
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при удалении');
     }
 }
 
@@ -123,10 +177,11 @@ function playAnime(id) {
         return a.id === id;
     });
     if (!anime) return;
-document.getElementById('playerTitle').textContent = anime.title;
-    document.getElementById('playerDescription').textContent = anime.description;
 
-    let videoUrl = 'https://vk.com/video_ext.php?oid=' + anime.videoData.oid + '&id=' + anime.videoData.id;
+    document.getElementById('playerTitle').textContent = anime.title;
+    document.getElementById('playerDescription').textContent = anime.description || '';
+    
+    let videoUrl = 'https://vk.com/video_ext.php?oid=' + anime.video_oid + '&id=' + anime.video_id;
     videoUrl += '&hd=' + currentQuality;
     videoUrl += '&autoplay=1';
     videoUrl += '&js_api=1';
@@ -175,7 +230,7 @@ function createAnimeCard(anime) {
     const playIcon = document.createElement('div');
     playIcon.className = 'play-icon';
     const playIconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    playIconSvg.setAttribute('width', '30');
+playIconSvg.setAttribute('width', '30');
     playIconSvg.setAttribute('height', '30');
     playIconSvg.setAttribute('viewBox', '0 0 24 24');
     playIconSvg.setAttribute('fill', 'white');
@@ -231,6 +286,7 @@ function renderAnimeGrid() {
 
     emptyState.classList.add('hidden');
     grid.innerHTML = '';
+
     const fragment = document.createDocumentFragment();
     
     animeList.forEach(function(anime) {
@@ -241,19 +297,25 @@ function renderAnimeGrid() {
     grid.appendChild(fragment);
 }
 
-function saveAnimeList() {
-    localStorage.setItem('animeList', JSON.stringify(animeList));
-}
+async function loadAnimeList() {
+    try {
+        const { data, error } = await supabase
+            .from('anime')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-function loadAnimeList() {
-    const saved = localStorage.getItem('animeList');
-    if (saved) {
-        try {
-            animeList = JSON.parse(saved);
-        } catch (e) {
-            console.error('Ошибка загрузки данных:', e);
-            animeList = [];
+        if (error) {
+            console.error('Ошибка загрузки:', error);
+            alert('Ошибка загрузки данных: ' + error.message);
+            return;
         }
+
+        animeList = data || [];
+        console.log('Загружено аниме:', animeList.length);
+        renderAnimeGrid();
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при загрузке данных');
     }
 }
 
