@@ -1,10 +1,11 @@
+const SUPABASE_URL = 'https://yxxqmabcrffoqegdtfpr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4eHFtYWJjcmZmb3FlZ2R0ZnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNDQ3NzcsImV4cCI6MjA3NjkyMDc3N30.0L8en_UyCCyDsqrQ6Ympt5ZsPDv3DujmYmaCbsZ5b0Y';
 
 const ADMIN_PASSWORD = 'admin123';
 let isAdmin = false;
 let animeList = [];
 let currentQuality = localStorage.getItem('videoQuality') || '720';
-let supabase = null;
+let supabaseClient = null;
 
 function initSupabase() {
     if (typeof supabase === 'undefined' || !window.supabase) {
@@ -14,7 +15,7 @@ function initSupabase() {
     }
     
     try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         console.log('Supabase инициализирован успешно');
         return true;
     } catch (error) {
@@ -123,7 +124,7 @@ const videoData = extractVkVideoId(vkUrl);
     };
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('anime')
             .insert([anime])
             .select();
@@ -151,7 +152,7 @@ async function deleteAnime(id) {
     }
 
     try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('anime')
             .delete()
             .eq('id', id);
@@ -229,8 +230,8 @@ function createAnimeCard(anime) {
 
     const playIcon = document.createElement('div');
     playIcon.className = 'play-icon';
-    const playIconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-playIconSvg.setAttribute('width', '30');
+const playIconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    playIconSvg.setAttribute('width', '30');
     playIconSvg.setAttribute('height', '30');
     playIconSvg.setAttribute('viewBox', '0 0 24 24');
     playIconSvg.setAttribute('fill', 'white');
@@ -299,7 +300,7 @@ function renderAnimeGrid() {
 
 async function loadAnimeList() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('anime')
             .select('*')
             .order('created_at', { ascending: false });
