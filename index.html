@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeHub - Просмотр аниме</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                    <line x1="7" y1="2" x2="7" y2="22"></line>
+                    <line x1="17" y1="2" x2="17" y2="22"></line>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <line x1="2" y1="7" x2="7" y2="7"></line>
+                    <line x1="2" y1="17" x2="7" y2="17"></line>
+                    <line x1="17" y1="17" x2="22" y2="17"></line>
+                    <line x1="17" y1="7" x2="22" y2="7"></line>
+                </svg>
+                <span>AnimeHub</span>
+            </div>
+            
+            <div class="admin-panel">
+                <div id="loginForm">
+                    <input type="password" id="passwordInput" placeholder="Пароль админа">
+                    <button class="btn btn-primary" onclick="login()">Войти</button>
+                </div>
+                <div id="adminButtons" class="hidden">
+                    <button class="btn btn-success" onclick="toggleAddForm()">+ Добавить аниме</button>
+                    <button class="btn btn-danger" onclick="logout()">Выйти</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="addForm" class="add-form">
+            <h2>Добавить новое аниме</h2>
+            <div class="form-group">
+                <input type="text" id="animeTitle" placeholder="Название аниме">
+            </div>
+            <div class="form-group">
+                <textarea id="animeDescription" placeholder="Описание"></textarea>
+            </div>
+            <div class="form-group">
+                <input type="text" id="animeVkUrl" placeholder="VK ссылка (например: https://vk.com/video-12345_67890)">
+            </div>
+            <div class="form-group">
+                <input type="text" id="animeThumbnail" placeholder="URL превью (необязательно)">
+            </div>
+            <div class="form-buttons">
+                <button class="btn btn-primary" onclick="addAnime()">Добавить</button>
+                <button class="btn btn-secondary" onclick="toggleAddForm()">Отмена</button>
+            </div>
+        </div>
+
+        <div id="videoPlayer" class="video-player">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 id="playerTitle" style="margin: 0;"></h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <label for="qualitySelect" style="color: #d1d5db;">Качество:</label>
+                    <select id="qualitySelect" onchange="changeQuality()" style="padding: 8px 12px; border-radius: 5px; border: 1px solid #6b7280; background: rgba(0,0,0,0.6); color: white; cursor: pointer;">
+                        <option value="360">360p (экономия трафика)</option>
+                        <option value="480">480p</option>
+                        <option value="720">720p (рекомендуется)</option>
+                        <option value="1080">1080p</option>
+                    </select>
+                </div>
+            </div>
+            <div class="video-container">
+                <iframe id="playerFrame" frameborder="0" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>
+            </div>
+            <p id="playerDescription" class="video-description"></p>
+            <button class="btn btn-secondary" onclick="closePlayer()">Закрыть плеер</button>
+        </div>
+        <div id="animeGrid" class="anime-grid"></div>
+
+        <div id="emptyState" class="empty-state hidden">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                <line x1="7" y1="2" x2="7" y2="22"></line>
+                <line x1="17" y1="2" x2="17" y2="22"></line>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+            </svg>
+            <h3>Пока нет добавленных аниме</h3>
+            <p id="emptyStateText">Войдите как администратор, чтобы добавить аниме</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
